@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BMTC Connect</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#e9eef3;
+}
+.app{
+  max-width:390px;
+  margin:auto;
+  background:#fff;
+  min-height:100vh;
+  border-radius:20px 20px 0 0;
+  box-shadow:0 0 15px rgba(0,0,0,0.15);
+}
+.header{
+  background:#1abc9c;
+  color:#fff;
+  text-align:center;
+  padding:18px;
+  font-size:20px;
+  font-weight:bold;
+}
+.content{padding:20px;}
+label{font-size:14px;color:#555;margin-top:15px;display:block;}
+input{
+  width:100%;
+  padding:12px;
+  margin-top:6px;
+  border-radius:10px;
+  border:1px solid #ccc;
+  font-size:15px;
+}
+.btn{
+  width:100%;
+  margin-top:18px;
+  padding:14px;
+  background:#1abc9c;
+  color:white;
+  border:none;
+  border-radius:12px;
+  font-size:16px;
+  font-weight:bold;
+}
+.voiceBtn{
+  margin-top:10px;
+  padding:12px;
+  width:100%;
+  background:#3498db;
+  color:white;
+  border:none;
+  border-radius:12px;
+  font-size:15px;
+}
+.quick{
+  display:flex;
+  gap:10px;
+  margin-top:15px;
+  flex-wrap:wrap;
+}
+.quick button{
+  flex:1;
+  padding:10px;
+  font-size:13px;
+  border-radius:10px;
+  border:none;
+  background:#ecf0f1;
+}
+.output{
+  margin-top:18px;
+  padding:15px;
+  background:#f4f6f8;
+  border-radius:10px;
+  font-size:14px;
+  white-space:pre-line;
+}
+iframe{
+  width:100%;
+  height:240px;
+  border:none;
+  border-radius:12px;
+  margin-top:15px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+<div class="header">BMTC Connect</div>
+
+<div class="content">
+
+<label>Bus Number (optional)</label>
+<input type="text" id="busNumber" placeholder="Eg: 500D">
+
+<label>Pickup Location (optional)</label>
+<input type="text" id="pickup" placeholder="Eg: Majestic">
+
+<label>Destination (optional)</label>
+<input type="text" id="destination" placeholder="Eg: Whitefield">
+
+<button class="voiceBtn" onclick="startVoice()">🎙️ Voice Search (English)</button>
+
+<div class="quick">
+  <button onclick="quickBus('500D')">500D</button>
+  <button onclick="quickBus('335E')">335E</button>
+  <button onclick="quickBus('KIA-9')">KIA-9</button>
+  <button onclick="quickPlace('Majestic')">Majestic</button>
+  <button onclick="quickPlace('Whitefield')">Whitefield</button>
+</div>
+
+<button class="btn" onclick="searchBus()">Search</button>
+
+<div class="output" id="result">
+Enter details manually or use voice search
+</div>
+
+<iframe id="map"></iframe>
+
+</div>
+</div>
+
+<script>
+/* PROTOTYPE BUS DATA */
+const busRoutes={
+"500D":["Yelahanka","Hebbal","Majestic","Silk Board","Electronic City"],
+"335E":["Majestic","Shivajinagar","KR Puram","Whitefield"],
+"365":["KR Market","BTM Layout","HSR Layout","Electronic City"],
+"KIA-9":["Electronic City","Kempegowda International Airport"]
+};
+
+/* SEARCH FUNCTION */
+function searchBus(){
+const bus=document.getElementById("busNumber").value.trim().toUpperCase();
+const pickup=document.getElementById("pickup").value.trim();
+const destination=document.getElementById("destination").value.trim();
+
+if(!bus && !pickup && !destination){
+alert("Please enter at least one detail");
+return;
+}
+
+let summary="Search Summary:\n";
+
+if(bus){
+summary+="Bus Number: "+bus+"\n";
+if(busRoutes[bus]){
+summary+="Major Stops Covered:\n";
+busRoutes[bus].forEach(s=>summary+="• "+s+"\n");
+}else{
+summary+="Major Stops: Not available (Prototype)\n";
+}
+}
+if(pickup) summary+="Pickup Location: "+pickup+"\n";
+if(destination) summary+="Destination: "+destination+"\n";
+summary+="Travel Mode: BMTC Bus\n";
+summary+="Status: Live Tracking (Prototype)";
+
+document.getElementById("result").innerText=summary;
+
+/* SAFE MAP */
+let mapQuery="";
+if(bus && busRoutes[bus]){
+mapQuery=busRoutes[bus].join(" to ");
+}else if(pickup && destination){
+mapQuery=pickup+" to "+destination;
+}else if(pickup){
+mapQuery=pickup;
+}else if(destination){
+mapQuery=destination;
+}else{
+mapQuery="BMTC Bangalore";
+}
+
+document.getElementById("map").src=
+"https://www.google.com/maps?q="+encodeURIComponent(mapQuery)+"&output=embed";
+}
+
+/* VOICE SEARCH */
+function startVoice(){
+if(!('webkitSpeechRecognition' in window)){
+alert("Voice search not supported");
+return;
+}
+const recognition=new webkitSpeechRecognition();
+recognition.lang="en-IN";
+recognition.start();
+
+recognition.onresult=function(event){
+const text=event.results[0][0].transcript.toUpperCase();
+
+if(text.includes("500")) document.getElementById("busNumber").value="500D";
+else if(text.includes("335")) document.getElementById("busNumber").value="335E";
+else if(text.includes("AIRPORT")) document.getElementById("busNumber").value="KIA-9";
+else document.getElementById("destination").value=text;
+
+searchBus();
+};
+}
+
+/* QUICK BUTTONS */
+function quickBus(b){document.getElementById("busNumber").value=b;}
+function quickPlace(p){document.getElementById("destination").value=p;}
+</script>
+
+</body>
+</html>
